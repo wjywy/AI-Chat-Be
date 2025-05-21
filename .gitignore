@@ -5,7 +5,14 @@ pnpm-debug.log*
 
 node_modules
 dist
+
 *.local
+
+# 环境变量文件
+src/.env
+
+# 或者忽略所有.env文件
+# **/.env
 
 # Editor directories and files
 .vscode/*
