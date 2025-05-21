@@ -4,9 +4,25 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOptions';
+import { UsersModule } from './users/users.module';
+import { JwtModule } from '@nestjs/jwt';
+
+import { User } from './users/entities/user.entity';
+import { EmailModule } from './email/email.module';
+import { RedisModule } from './redis/redis.module';
+import { LoginGuard } from './login.guard';
 
 @Module({
   imports: [
+    JwtModule.registerAsync({
+      global: true,
+      useFactory: () => ({
+        secret: 'fishThing',
+        signOptions: {
+          expiresIn: '7d',
+        },
+      }),
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: 'src/.env',
@@ -20,11 +36,21 @@ import { MysqlConnectionOptions } from 'typeorm/driver/mysql/MysqlConnectionOpti
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         synchronize: false,
+        entities: [User],
       }),
       inject: [ConfigService],
     }),
+    UsersModule,
+    EmailModule,
+    RedisModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      useClass: LoginGuard,
+      provide: 'APP_GUARD',
+    },
+  ],
 })
 export class AppModule {}
