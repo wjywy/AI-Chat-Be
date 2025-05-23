@@ -21,6 +21,8 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@google/genai": "^1.0.1",
+    "@google/generative-ai": "^0.24.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -28,9 +30,11 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^10.0.2",
+    "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "mysql2": "^3.11.4",
     "nodemailer": "^6.9.16",
+    "openai": "^4.102.0",
     "redis": "^4.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
