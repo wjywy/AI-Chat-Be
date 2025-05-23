@@ -11,6 +11,9 @@ import { User } from './users/entities/user.entity';
 import { EmailModule } from './email/email.module';
 import { RedisModule } from './redis/redis.module';
 import { LoginGuard } from './login.guard';
+import { ChatModule } from './chat/chat.module';
+import { Chat } from './chat/entities/chat.entity';
+import { Message } from './chat/entities/message.entity';
 
 @Module({
   imports: [
@@ -36,13 +39,14 @@ import { LoginGuard } from './login.guard';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         synchronize: false,
-        entities: [User],
+        entities: [User, Chat, Message],
       }),
       inject: [ConfigService],
     }),
     UsersModule,
     EmailModule,
     RedisModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [

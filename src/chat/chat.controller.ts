@@ -1,0 +1,106 @@
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Sse,
+  Get,
+  HttpException,
+  HttpStatus,
+  Logger,
+  Query,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+import { SendMessageDto } from './dto/send-message.dto';
+import { ChatService } from './chat.service';
+import { CreateChatDto } from './dto/create-chat.dto';
+
+@Controller('chat')
+export class ChatController {
+  constructor(private readonly chatService: ChatService) {}
+
+  private logger = new Logger();
+
+  // 创建一个新的会话
+  @Post('createChat')
+  async createChat(@Body() createChatDto: CreateChatDto) {
+    try {
+      const chat = await this.chatService.createChat(createChatDto);
+      return {
+        data: chat,
+        msg: '会话创建成功',
+      };
+    } catch (error) {
+      this.logger.error(`创建会话失败: ${error || '未知错误'}`);
+      throw new HttpException(
+        `创建会话失败: ${error || '未知错误'}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // 获取用户的所有会话
+  @Get('userChat')
+  async getUserChats(@Query() userId: number) {
+    const chats = await this.chatService.getUserChats(userId);
+    return {
+      data: chats,
+    };
+  }
+
+  // 获取单个会话
+  @Get(':id')
+  async getChatById(@Param('id') id: string) {
+    const chat = await this.chatService.getChatById(id);
+    return {
+      data: chat,
+    };
+  }
+
+  @Get('deleteChat/:id')
+  async deleteChat(@Param('id') id: string) {
+    await this.chatService.deleteChat(id);
+    return {
+      msg: '会话删除成功',
+      data: {},
+    };
+  }
+
+  // 获取单个会话的所有消息
+  @Get('messages/:id')
+  async getChatMessages(@Param('id') id: string) {
+    const messages = await this.chatService.getChatMessages(id);
+    return {
+      data: messages,
+    };
+  }
+
+  @Sse('getChat/:id')
+  streamEvents(@Param('id') id: string): Observable<MessageEvent> {
+    console.log('streamEvents', id);
+    return this.chatService.getStreamEvents(id);
+  }
+
+  @Post('sendMessage')
+  async sendMessage(@Body() sendMessageDto: SendMessageDto) {
+    // 验证必要的参数
+    if (!sendMessageDto.id || !sendMessageDto.message) {
+      throw new HttpException(
+        '缺少必要参数：chatId 或 message',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    // 调用 service 方法处理消息并通过 SSE 发送响应
+    await this.chatService.useGeminiToChat(
+      sendMessageDto.id,
+      sendMessageDto.message,
+    );
+
+    return {
+      msg: '消息已发送并开始处理',
+      data: {},
+    };
+  }
+}

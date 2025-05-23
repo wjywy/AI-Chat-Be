@@ -45,14 +45,17 @@ export class UsersService {
     const newUser = new User();
     newUser.userName = userName;
     newUser.password = md5(password);
-    newUser.nickName = nickName || 'MoMo'; // 昵称默认为MoMo
+    newUser.nickName = nickName || 'MoMo';
 
     try {
       await this.userRepository.save(newUser);
-      return '注册成功';
+      return {
+        message: '注册成功',
+        data: {},
+      };
     } catch (error) {
       this.logger.error(error, UsersService);
-      return '注册失败';
+      throw new HttpException('注册失败', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -71,13 +74,10 @@ export class UsersService {
       throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
     }
 
-    const needReturnUserInfo = {
-      id: userInfo.id,
+    return {
       userName: userInfo.userName,
       nickName: userInfo.nickName,
       token: '',
     };
-
-    return needReturnUserInfo;
   }
 }
