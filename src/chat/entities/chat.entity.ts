@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 
 import { Message } from './message.entity';
+import { FileEntity } from 'src/file/entities/file.entity';
 
 @Entity()
 export class Chat {
@@ -31,6 +32,9 @@ export class Chat {
 
   @OneToMany(() => Message, (message) => message.chat)
   messages: Message[];
+
+  @OneToMany(() => FileEntity, (file) => file.chat)
+  files: FileEntity[];
 
   @CreateDateColumn()
   createTime: Date;

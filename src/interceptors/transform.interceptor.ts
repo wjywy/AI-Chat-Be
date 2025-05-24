@@ -31,7 +31,7 @@ export class TransformInterceptor<T>
 
         // 处理成功响应
         return {
-          code: 0, // 成功响应统一使用 code: 0
+          code: 1, // 成功响应统一使用 code: 1
           msg: data?.msg || '请求成功',
           data: (data?.data || data || {}) as T,
         };
