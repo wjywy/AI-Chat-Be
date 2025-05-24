@@ -14,6 +14,8 @@ import { LoginGuard } from './login.guard';
 import { ChatModule } from './chat/chat.module';
 import { Chat } from './chat/entities/chat.entity';
 import { Message } from './chat/entities/message.entity';
+import { FileModule } from './file/file.module';
+import { FileEntity } from './file/entities/file.entity';
 
 @Module({
   imports: [
@@ -39,7 +41,7 @@ import { Message } from './chat/entities/message.entity';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         synchronize: false,
-        entities: [User, Chat, Message],
+        entities: [User, Chat, Message, FileEntity],
       }),
       inject: [ConfigService],
     }),
@@ -47,6 +49,7 @@ import { Message } from './chat/entities/message.entity';
     EmailModule,
     RedisModule,
     ChatModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [
