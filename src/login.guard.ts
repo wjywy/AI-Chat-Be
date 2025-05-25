@@ -12,7 +12,7 @@ import { Request } from 'express';
 import { Observable } from 'rxjs';
 
 interface JwtUserData {
-  id: number;
+  userId: number;
   username: string;
   nickName: string;
 }
