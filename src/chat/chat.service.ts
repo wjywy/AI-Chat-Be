@@ -6,7 +6,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
 import { Repository } from 'typeorm';
 import { Message, MessageRole } from './entities/message.entity';
-import { CreateChatDto } from './dto/create-chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -132,7 +131,13 @@ export class ChatService {
     });
   }
 
-  async createChat({ chatTitle, userId }: CreateChatDto) {
+  async createChat({
+    chatTitle,
+    userId,
+  }: {
+    chatTitle: string;
+    userId: number;
+  }) {
     const chat = this.chatRepository.create({
       userId,
       title: chatTitle || '新对话',
