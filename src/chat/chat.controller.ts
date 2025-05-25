@@ -32,9 +32,9 @@ export class ChatController {
     @Req() request: Request,
   ) {
     try {
-      const { id } = request.user;
+      const { userId } = request.user;
       const { chatTitle } = createChatDto;
-      const chat = await this.chatService.createChat({ chatTitle, userId: id });
+      const chat = await this.chatService.createChat({ chatTitle, userId });
       return {
         data: chat,
         msg: '会话创建成功',
@@ -51,8 +51,9 @@ export class ChatController {
   // 获取用户的所有会话
   @Get('userChat')
   async getUserChats(@Req() request: Request) {
-    const { id } = request.user;
-    const chats = await this.chatService.getUserChats(id);
+    const { userId } = request.user;
+    console.log('userId', request.user);
+    const chats = await this.chatService.getUserChats(userId);
     return {
       data: chats,
     };
