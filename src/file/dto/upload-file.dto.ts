@@ -1,5 +1,4 @@
 import { IsNotEmpty } from 'class-validator';
-import { File } from 'node:buffer';
 
 export class UploadFileDto {
   @IsNotEmpty({

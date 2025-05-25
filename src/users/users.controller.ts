@@ -44,10 +44,23 @@ export class UsersController {
 
   @Post('login')
   async login(@Body() loginUserDto: LoginUserDto) {
-    const needReturnLoginInfo = await this.usersService.login(loginUserDto);
-    const token = this.jwtService.sign(needReturnLoginInfo, {
-      expiresIn: '7d',
-    });
+    const userInfo = await this.usersService.login(loginUserDto);
+    const { userName, nickName } = userInfo;
+    const needReturnLoginInfo = {
+      userName,
+      nickName,
+      token: '',
+    };
+    const token = this.jwtService.sign(
+      {
+        userName,
+        nickName,
+        userId: userInfo.id,
+      },
+      {
+        expiresIn: '7d',
+      },
+    );
     needReturnLoginInfo.token = token;
     return {
       message: '登录成功',

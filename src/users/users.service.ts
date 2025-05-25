@@ -67,7 +67,7 @@ export class UsersService {
     });
 
     if (!userInfo) {
-      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+      throw new HttpException('用户not found', HttpStatus.BAD_REQUEST);
     }
 
     if (userInfo.password !== md5(password)) {
@@ -75,8 +75,7 @@ export class UsersService {
     }
 
     return {
-      userName: userInfo.userName,
-      nickName: userInfo.nickName,
+      ...userInfo,
       token: '',
     };
   }

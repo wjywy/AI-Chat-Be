@@ -8,15 +8,18 @@ import {
   HttpException,
   HttpStatus,
   Logger,
-  Query,
+  Req,
 } from '@nestjs/common';
+import { Request } from 'express';
 import { Observable } from 'rxjs';
 
 import { SendMessageDto } from './dto/send-message.dto';
 import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
+import { RequireLogin } from 'src/custom.decorator';
 
 @Controller('chat')
+@RequireLogin()
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
@@ -24,9 +27,14 @@ export class ChatController {
 
   // 创建一个新的会话
   @Post('createChat')
-  async createChat(@Body() createChatDto: CreateChatDto) {
+  async createChat(
+    @Body() createChatDto: CreateChatDto,
+    @Req() request: Request,
+  ) {
     try {
-      const chat = await this.chatService.createChat(createChatDto);
+      const { id } = request.user;
+      const { chatTitle } = createChatDto;
+      const chat = await this.chatService.createChat({ chatTitle, userId: id });
       return {
         data: chat,
         msg: '会话创建成功',
@@ -42,8 +50,9 @@ export class ChatController {
 
   // 获取用户的所有会话
   @Get('userChat')
-  async getUserChats(@Query() userId: number) {
-    const chats = await this.chatService.getUserChats(userId);
+  async getUserChats(@Req() request: Request) {
+    const { id } = request.user;
+    const chats = await this.chatService.getUserChats(id);
     return {
       data: chats,
     };

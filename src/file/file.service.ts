@@ -53,6 +53,8 @@ export class FileService {
     let fileRecord = await this.fileRepository.findOne({
       where: { fileId },
     });
+    this.logger.log(fileRecord, 'fileRecord');
+    console.log(fileRecord, 'fileRecord');
     // 如果文件记录不存在，则创建新记录
     if (!fileRecord) {
       fileRecord = new FileEntity();
@@ -273,7 +275,7 @@ export class FileService {
     });
 
     if (!chat) {
-      throw new HttpException('聊天记录不存在', HttpStatus.BAD_REQUEST);
+      throw new HttpException('聊天', HttpStatus.BAD_REQUEST);
     }
 
     fileRecord.chatId = chatId;
@@ -281,7 +283,7 @@ export class FileService {
     await this.fileRepository.save(fileRecord);
 
     return {
-      code: 1,
+      // code: 1,
       msg: '文件已关联到聊天',
       data: {
         fileId,
