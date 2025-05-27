@@ -1,17 +1,22 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-// import OpenAI from 'openai';
-
-import { Inject } from '@nestjs/common';
-
-import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Chat } from './entities/chat.entity';
 import { Repository } from 'typeorm';
+
+import {
+  Injectable,
+  Logger,
+  HttpException,
+  HttpStatus,
+  Inject,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+
 import { Message, MessageRole } from './entities/message.entity';
-import { FileService } from 'src/file/file.service';
-// import * as fs from 'fs';
+import { Chat } from './entities/chat.entity';
+
 import { AiService } from 'src/ai/ai.service';
+import { FileService } from 'src/file/file.service';
+
+import { UpdateTitleDto } from './dto/update-title.dto';
 
 @Injectable()
 export class ChatService {
@@ -156,6 +161,16 @@ export class ChatService {
       title: chatTitle || '新对话',
     });
 
+    return await this.chatRepository.save(chat);
+  }
+
+  // 更新会话标题
+  async updateChatTitle({ title, chatId }: UpdateTitleDto) {
+    const chat = await this.getChatById(chatId);
+    if (!chat) {
+      throw new HttpException('找不到对应的会话', HttpStatus.NOT_FOUND);
+    }
+    chat.title = title;
     return await this.chatRepository.save(chat);
   }
 

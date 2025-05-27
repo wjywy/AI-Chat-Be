@@ -1,3 +1,5 @@
+import { Repository } from 'typeorm';
+
 import {
   HttpException,
   Injectable,
@@ -5,13 +7,15 @@ import {
   HttpStatus,
   Inject,
 } from '@nestjs/common';
-import { md5 } from '../util';
-import { RegisterUserDto } from './dto/register-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+
 import { LoginUserDto } from './dto/login-user.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
+
 import { RedisService } from '../redis/redis.service';
+import { User } from './entities/user.entity';
+
+import { md5 } from '../util';
 
 @Injectable()
 export class UsersService {

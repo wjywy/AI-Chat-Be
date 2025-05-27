@@ -1,13 +1,13 @@
+import { JwtService } from '@nestjs/jwt';
 import { Controller, Post, Body, Get, Query, Inject } from '@nestjs/common';
 
-import { UsersService } from './users.service';
-import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
+import { registerCaptchaDto } from './dto/register-captcha.dto';
 
-import { JwtService } from '@nestjs/jwt';
+import { UsersService } from './users.service';
 import { EmailService } from '../email/email.service';
 import { RedisService } from '../redis/redis.service';
-import { registerCaptchaDto } from './dto/register-captcha.dto';
 
 @Controller('users')
 export class UsersController {
