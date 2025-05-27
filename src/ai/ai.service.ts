@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
 import OpenAI from 'openai';
 import * as fs from 'fs';
+
+import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AiService {
@@ -29,12 +30,9 @@ export class AiService {
   async getAiWithMessage() {}
 
   async getMain(message: string, filePath: string) {
-    console.log('content', message);
-
     const content = filePath
       ? await this.getAiWithFile(filePath)
       : this.defaultMessage;
-    console.log('content', content);
 
     const completion = await this.openai.chat.completions.create({
       model: 'qwen-long',

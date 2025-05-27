@@ -1,3 +1,6 @@
+import { Request } from 'express';
+import { Observable } from 'rxjs';
+
 import {
   Controller,
   Post,
@@ -10,13 +13,14 @@ import {
   Logger,
   Req,
 } from '@nestjs/common';
-import { Request } from 'express';
-import { Observable } from 'rxjs';
+
+import { RequireLogin } from 'src/custom.decorator';
+
+import { ChatService } from './chat.service';
 
 import { SendMessageDto } from './dto/send-message.dto';
-import { ChatService } from './chat.service';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { RequireLogin } from 'src/custom.decorator';
+import { UpdateTitleDto } from './dto/update-title.dto';
 
 @Controller('chat')
 @RequireLogin()
@@ -46,6 +50,16 @@ export class ChatController {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+  }
+
+  @Post('updateTitle')
+  async updateTitle(@Body() updateTitleDto: UpdateTitleDto) {
+    const { title, chatId } = updateTitleDto;
+    await this.chatService.updateChatTitle({ title, chatId });
+    return {
+      msg: '修改成功',
+      data: {},
+    };
   }
 
   // 获取用户的所有会话

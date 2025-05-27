@@ -1,3 +1,5 @@
+import { Repository } from 'typeorm';
+
 import {
   Controller,
   Get,
@@ -6,8 +8,14 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  Logger,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FileInterceptor } from '@nestjs/platform-express';
+
+import { RequireLogin } from 'src/custom.decorator';
 import { FileService } from './file.service';
+
 import {
   CancelFileDto,
   CheckFileDto,
@@ -15,14 +23,8 @@ import {
   UploadFileDto,
 } from './dto';
 
-import { Logger } from '@nestjs/common';
-
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { Chat } from '../chat/entities/chat.entity';
 import { Message } from '../chat/entities/message.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { RequireLogin } from 'src/custom.decorator';
 
 @Controller('file')
 @RequireLogin()
