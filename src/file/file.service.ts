@@ -216,6 +216,8 @@ export class FileService {
     // 删除临时目录
     fs.rmdirSync(chunkDir);
 
+    await this.attachFileToChat(fileId, fileRecord.chatId);
+
     return {
       msg: '文件合并成功',
       data: {
@@ -278,12 +280,11 @@ export class FileService {
       throw new HttpException('聊天', HttpStatus.BAD_REQUEST);
     }
 
-    fileRecord.chatId = chatId;
+    // fileRecord.chatId = chatId;
     fileRecord.chat = chat;
     await this.fileRepository.save(fileRecord);
 
     return {
-      // code: 1,
       msg: '文件已关联到聊天',
       data: {
         fileId,

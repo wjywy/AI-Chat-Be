@@ -1,4 +1,7 @@
-import OpenAI from 'openai';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+// import OpenAI from 'openai';
+
+import { Inject } from '@nestjs/common';
 
 import { Injectable, Logger, HttpException, HttpStatus } from '@nestjs/common';
 import { Observable, Subject } from 'rxjs';
@@ -6,12 +9,21 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Chat } from './entities/chat.entity';
 import { Repository } from 'typeorm';
 import { Message, MessageRole } from './entities/message.entity';
+import { FileService } from 'src/file/file.service';
+// import * as fs from 'fs';
+import { AiService } from 'src/ai/ai.service';
 
 @Injectable()
 export class ChatService {
   private chatSubjects = new Map<string, Subject<MessageEvent>>();
 
   private logger = new Logger();
+
+  @Inject(FileService)
+  private fileService: FileService;
+
+  @Inject(AiService)
+  private aiService: AiService;
 
   @InjectRepository(Chat)
   private chatRepository: Repository<Chat>;
@@ -46,27 +58,28 @@ export class ChatService {
     }
   }
 
-  async useGeminiToChat(chatId: string, userMessage: string) {
+  async useGeminiToChat(chatId: string, userMessage: string, fileId?: string) {
     try {
-      const openai = new OpenAI({
-        // 若没有配置环境变量，请用阿里云百炼API Key将下行替换为：apiKey: "sk-xxx",
-        apiKey: 'sk-839c413f949049918615290813173f2f',
-        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      });
+      let filePath = '';
+      // 用户上传了文件
+      if (fileId) {
+        const files = await this.fileService.getChatFiles(chatId); // 获取文件列表
+        if (files.data.length === 0) {
+          throw new HttpException('文件未上传', HttpStatus.BAD_REQUEST);
+        }
+
+        // 根据fileId查找对应的文件
+        const file = files.data.find((file) => file.fileId === fileId);
+        if (!file) {
+          throw new HttpException('找不到对应的文件', HttpStatus.NOT_FOUND);
+        }
+
+        filePath = file.filePath;
+      }
 
       await this.saveMessage(chatId, userMessage, MessageRole.USER); // 保存用户消息到数据库
 
-      const completion = await openai.chat.completions.create({
-        model: 'qwen-plus', //模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant.' },
-          { role: 'user', content: userMessage },
-        ],
-        stream: true,
-        stream_options: {
-          include_usage: true,
-        },
-      });
+      const completion = await this.aiService.getMain(userMessage, filePath);
 
       let fullContent = '';
       for await (const chunk of completion) {
