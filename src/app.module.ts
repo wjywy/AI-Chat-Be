@@ -16,6 +16,7 @@ import { Chat } from './chat/entities/chat.entity';
 import { Message } from './chat/entities/message.entity';
 import { FileModule } from './file/file.module';
 import { FileEntity } from './file/entities/file.entity';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { FileEntity } from './file/entities/file.entity';
     RedisModule,
     ChatModule,
     FileModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [
