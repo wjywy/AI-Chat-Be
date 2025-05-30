@@ -1,5 +1,5 @@
 import { Observable, Subject } from 'rxjs';
-import { Repository } from 'typeorm';
+import { Between, Like, Repository } from 'typeorm';
 
 import {
   Injectable,
@@ -17,6 +17,7 @@ import { AiService } from 'src/ai/ai.service';
 import { FileService } from 'src/file/file.service';
 
 import { UpdateTitleDto } from './dto/update-title.dto';
+import { SearchChatDto } from './dto/search-chat.dto';
 
 @Injectable()
 export class ChatService {
@@ -158,7 +159,7 @@ export class ChatService {
   }) {
     const chat = this.chatRepository.create({
       userId,
-      title: chatTitle || '新对话',
+      title: chatTitle.slice(0, 8) || '新对话',
     });
 
     return await this.chatRepository.save(chat);
@@ -202,5 +203,28 @@ export class ChatService {
 
     chat.isActive = false;
     await this.chatRepository.save(chat);
+  }
+
+  async searchChat({ keyWord }: SearchChatDto, userId: number) {
+    return await this.chatRepository.find({
+      where: { title: Like(`%${keyWord}%`), isActive: true, userId },
+      order: { updateTime: 'DESC' },
+    });
+  }
+
+  async getOneDayHistory(userId: number) {
+    const start = new Date();
+    start.setUTCHours(0, 0, 0, 0); // 设置为当天00:00:00.000 UTC时间
+
+    const end = new Date();
+    end.setUTCHours(23, 59, 59, 999); // 设置为当天23:59:59.999 UTC时间
+
+    return await this.chatRepository.find({
+      where: {
+        userId,
+        isActive: true,
+        createTime: Between(start, end), // 直接进行UTC时间比较
+      },
+    });
   }
 }

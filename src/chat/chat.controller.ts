@@ -21,6 +21,7 @@ import { ChatService } from './chat.service';
 import { SendMessageDto } from './dto/send-message.dto';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { UpdateTitleDto } from './dto/update-title.dto';
+import { SearchChatDto } from './dto/search-chat.dto';
 
 @Controller('chat')
 @RequireLogin()
@@ -59,6 +60,19 @@ export class ChatController {
     return {
       msg: '修改成功',
       data: {},
+    };
+  }
+
+  // 返回一日内的会话记录
+  @Get('oneDayHistory')
+  async getOneDayHistory(@Req() request: Request) {
+    console.log(request.user, 'user');
+    const { userId } = request.user;
+    const data = await this.chatService.getOneDayHistory(userId);
+
+    return {
+      msg: '获取成功',
+      data,
     };
   }
 
@@ -125,6 +139,21 @@ export class ChatController {
     return {
       msg: '消息已发送并开始处理',
       data: {},
+    };
+  }
+
+  // 搜索会话
+  @Post('searchChat')
+  async findChat(
+    @Body() searchChatDto: SearchChatDto,
+    @Req() request: Request,
+  ) {
+    const { userId } = request.user;
+    const data = await this.chatService.searchChat(searchChatDto, userId);
+
+    return {
+      msg: '搜索成功',
+      data,
     };
   }
 }
