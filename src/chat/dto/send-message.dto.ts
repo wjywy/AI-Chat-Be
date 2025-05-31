@@ -10,4 +10,8 @@ export class SendMessageDto {
     message: 'message不能为空',
   })
   message: string;
+
+  imgUrl?: string;
+
+  fileId?: string;
 }
