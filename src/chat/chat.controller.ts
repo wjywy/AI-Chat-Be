@@ -130,11 +130,12 @@ export class ChatController {
       );
     }
 
+    if (sendMessageDto.imgUrl) {
+      // 调用云床服务，将图片存储在云端，并返回url进行保存
+    }
+
     // 调用 service 方法处理消息并通过 SSE 发送响应
-    await this.chatService.useGeminiToChat(
-      sendMessageDto.id,
-      sendMessageDto.message,
-    );
+    await this.chatService.useGeminiToChat(sendMessageDto);
 
     return {
       msg: '消息已发送并开始处理',

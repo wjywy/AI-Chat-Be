@@ -18,6 +18,7 @@ import { FileService } from 'src/file/file.service';
 
 import { UpdateTitleDto } from './dto/update-title.dto';
 import { SearchChatDto } from './dto/search-chat.dto';
+import { SendMessageDto } from './dto/send-message.dto';
 
 @Injectable()
 export class ChatService {
@@ -64,12 +65,12 @@ export class ChatService {
     }
   }
 
-  async useGeminiToChat(chatId: string, userMessage: string, fileId?: string) {
+  async useGeminiToChat({ id, message, imgUrl, fileId }: SendMessageDto) {
     try {
       let filePath = '';
       // 用户上传了文件
       if (fileId) {
-        const files = await this.fileService.getChatFiles(chatId); // 获取文件列表
+        const files = await this.fileService.getChatFiles(id); // 获取文件列表
         if (files.data.length === 0) {
           throw new HttpException('文件未上传', HttpStatus.BAD_REQUEST);
         }
@@ -83,9 +84,9 @@ export class ChatService {
         filePath = file.filePath;
       }
 
-      await this.saveMessage(chatId, userMessage, MessageRole.USER); // 保存用户消息到数据库
+      await this.saveMessage(id, message, MessageRole.USER, imgUrl); // 保存用户消息到数据库
 
-      const completion = await this.aiService.getMain(userMessage, filePath);
+      const completion = await this.aiService.getMain(message, filePath);
 
       let fullContent = '';
       for await (const chunk of completion) {
@@ -94,7 +95,7 @@ export class ChatService {
           fullContent += content;
 
           // 通过SSE发送每个块到前端
-          this.sendMessageToChat(chatId, {
+          this.sendMessageToChat(id, {
             type: 'chunk',
             content: content,
             isComplete: false,
@@ -103,20 +104,20 @@ export class ChatService {
       }
 
       // 发送完整内容和完成标志
-      this.sendMessageToChat(chatId, {
+      this.sendMessageToChat(id, {
         type: 'complete',
         content: fullContent,
         isComplete: true,
       });
 
-      await this.saveMessage(chatId, fullContent, MessageRole.SYSTEM); // 保存AI的响应到数据库
+      await this.saveMessage(id, fullContent, MessageRole.SYSTEM); // 保存AI的响应到数据库
 
-      this.logger.log(`聊天 ${chatId} 的完整响应已发送`);
+      this.logger.log(`聊天 ${id} 的完整响应已发送`);
     } catch (error) {
-      this.logger.error(`聊天 ${chatId} 出错：${error}`);
+      this.logger.error(`聊天 ${id} 出错：${error}`);
 
       // 发送错误信息到前端
-      this.sendMessageToChat(chatId, {
+      this.sendMessageToChat(id, {
         type: 'error',
         content: `发生错误: ${error || '未知错误'}`,
         isComplete: true,
@@ -133,11 +134,17 @@ export class ChatService {
     }
   }
 
-  async saveMessage(chatId: string, content: string, role: MessageRole) {
+  async saveMessage(
+    chatId: string,
+    content: string,
+    role: MessageRole,
+    imgUrl?: string,
+  ) {
     const message = this.messageRepository.create({
       chatId,
       content,
       role,
+      imgUrl,
     });
 
     return await this.messageRepository.save(message);
