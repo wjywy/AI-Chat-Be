@@ -12,6 +12,7 @@ import {
   HttpStatus,
   Logger,
   Req,
+  Query,
 } from '@nestjs/common';
 
 import { RequireLogin } from 'src/custom.decorator';
@@ -76,6 +77,21 @@ export class ChatController {
     };
   }
 
+  // 搜索会话(模糊搜索)
+  @Get('searchChat')
+  async findChat(
+    @Query() searchChatDto: SearchChatDto,
+    @Req() request: Request,
+  ) {
+    const { userId } = request.user;
+    const data = await this.chatService.searchChat(searchChatDto, userId);
+
+    return {
+      msg: '搜索成功',
+      data,
+    };
+  }
+
   // 获取用户的所有会话
   @Get('userChat')
   async getUserChats(@Req() request: Request) {
@@ -130,31 +146,12 @@ export class ChatController {
       );
     }
 
-    if (sendMessageDto.imgUrl) {
-      // 调用云床服务，将图片存储在云端，并返回url进行保存
-    }
-
     // 调用 service 方法处理消息并通过 SSE 发送响应
     await this.chatService.useGeminiToChat(sendMessageDto);
 
     return {
       msg: '消息已发送并开始处理',
       data: {},
-    };
-  }
-
-  // 搜索会话
-  @Post('searchChat')
-  async findChat(
-    @Body() searchChatDto: SearchChatDto,
-    @Req() request: Request,
-  ) {
-    const { userId } = request.user;
-    const data = await this.chatService.searchChat(searchChatDto, userId);
-
-    return {
-      msg: '搜索成功',
-      data,
     };
   }
 }

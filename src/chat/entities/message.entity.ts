@@ -32,11 +32,10 @@ export class Message {
   content: string;
 
   @Column({
-    length: 256,
-    // 允许为空
+    type: 'json',
     nullable: true,
   })
-  imgUrl: string;
+  imgUrl: string[];
 
   @ManyToOne(() => Chat, (chat) => chat.messages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'chatId' })
