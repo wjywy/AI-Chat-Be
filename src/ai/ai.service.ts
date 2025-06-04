@@ -29,16 +29,41 @@ export class AiService {
 
   async getAiWithMessage() {}
 
-  async getMain(message: string, filePath: string) {
+  getAiWithImg(message: string, imgUrl: string[]) {
+    const imgContent: {
+      type: 'image_url';
+      image_url: { url: string };
+    }[] = imgUrl.map((item) => {
+      return {
+        type: 'image_url',
+        image_url: { url: item },
+      };
+    });
+
+    const messageContent: {
+      type: 'text';
+      text: string;
+    } = {
+      type: 'text',
+      text: message,
+    };
+
+    return [messageContent, ...imgContent];
+  }
+
+  async getMain(message: string, filePath: string, imgUrl?: string[]) {
+    console.log('filePath', imgUrl);
     const content = filePath
       ? await this.getAiWithFile(filePath)
       : this.defaultMessage;
 
+    const userContent = imgUrl ? this.getAiWithImg(message, imgUrl) : message;
+
     const completion = await this.openai.chat.completions.create({
-      model: 'qwen-long',
+      model: 'qwen-vl-max',
       messages: [
         { role: 'system', content: content },
-        { role: 'user', content: `${message}` },
+        { role: 'user', content: userContent },
       ],
       stream: true,
       stream_options: {

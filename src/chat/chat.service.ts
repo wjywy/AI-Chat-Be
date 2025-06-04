@@ -86,7 +86,11 @@ export class ChatService {
 
       await this.saveMessage(id, message, MessageRole.USER, imgUrl); // 保存用户消息到数据库
 
-      const completion = await this.aiService.getMain(message, filePath);
+      const completion = await this.aiService.getMain(
+        message,
+        filePath,
+        imgUrl,
+      );
 
       let fullContent = '';
       for await (const chunk of completion) {
@@ -138,7 +142,7 @@ export class ChatService {
     chatId: string,
     content: string,
     role: MessageRole,
-    imgUrl?: string,
+    imgUrl?: string[],
   ) {
     const message = this.messageRepository.create({
       chatId,
@@ -213,6 +217,7 @@ export class ChatService {
   }
 
   async searchChat({ keyWord }: SearchChatDto, userId: number) {
+    console.log(keyWord);
     return await this.chatRepository.find({
       where: { title: Like(`%${keyWord}%`), isActive: true, userId },
       order: { updateTime: 'DESC' },

@@ -11,7 +11,7 @@ export class SendMessageDto {
   })
   message: string;
 
-  imgUrl?: string;
+  imgUrl?: string[];
 
   fileId?: string;
 }

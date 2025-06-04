@@ -47,6 +47,14 @@ export class FileService {
     return crypto.createHash('md5').update(buffer).digest('hex');
   }
 
+  // 添加一个私有方法来转换绝对路径为相对URL路径
+  private getRelativeFilePath(absolutePath: string): string {
+    // 将绝对路径转换为相对于uploads目录的路径
+    const relativePath = path.relative(this.uploadDir, absolutePath);
+    // 转换为URL格式，使用正斜杠
+    return `/uploads/${relativePath.replace(/\\/g, '/')}`;
+  }
+
   async checkFile(checkFileDto: CheckFileDto) {
     const { fileId, fileName, chatId } = checkFileDto;
     // 查找文件记录
@@ -86,7 +94,7 @@ export class FileService {
         data: {
           fileStatus: 1,
           isCompleted: true,
-          filePath: fileRecord.filePath,
+          filePath: this.getRelativeFilePath(fileRecord.filePath),
           fileName: fileName,
         },
       };
@@ -221,7 +229,7 @@ export class FileService {
     return {
       msg: '文件合并成功',
       data: {
-        filePath: filePath,
+        filePath: this.getRelativeFilePath(filePath),
         fileName: fileName,
       },
     };
