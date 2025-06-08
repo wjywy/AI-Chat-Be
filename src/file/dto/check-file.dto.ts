@@ -11,8 +11,5 @@ export class CheckFileDto {
   })
   fileId: string;
 
-  @IsNotEmpty({
-    message: 'Chat Id is required',
-  })
-  chatId: string;
+  chatId?: string;
 }

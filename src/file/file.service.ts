@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 import { Repository } from 'typeorm';
 
 import { InjectRepository } from '@nestjs/typeorm';
-import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 import {
   CancelFileDto,
@@ -13,7 +13,6 @@ import {
   UploadFileDto,
 } from './dto';
 import { Chat } from '../chat/entities/chat.entity';
-import { Message } from '../chat/entities/message.entity';
 import { FileEntity } from './entities/file.entity';
 
 @Injectable()
@@ -21,13 +20,9 @@ export class FileService {
   @InjectRepository(Chat)
   private chatRepository: Repository<Chat>;
 
-  @InjectRepository(Message)
-  private messageRepository: Repository<Message>;
-
   @InjectRepository(FileEntity)
   private fileRepository: Repository<FileEntity>;
 
-  private logger = new Logger(FileService.name);
   private readonly uploadDir = path.join(process.cwd(), 'uploads');
   private readonly tempDir = path.join(process.cwd(), 'uploads', 'temp');
 
@@ -61,15 +56,13 @@ export class FileService {
     let fileRecord = await this.fileRepository.findOne({
       where: { fileId },
     });
-    this.logger.log(fileRecord, 'fileRecord');
-    console.log(fileRecord, 'fileRecord');
     // 如果文件记录不存在，则创建新记录
     if (!fileRecord) {
       fileRecord = new FileEntity();
       Object.assign(fileRecord, {
         fileId,
         fileName,
-        chatId,
+        chatId: chatId ? chatId : null,
         uploadedChunks: 0,
         isCompleted: false,
         isCanceled: false,
@@ -122,7 +115,7 @@ export class FileService {
     }
 
     return {
-      msg: '文件检查成功，需要继续上传',
+      msg: '文件检查成功，需要继续上传wow',
       data: {
         fileStatus: 2,
         uploaded: uploadedChunks,
@@ -146,14 +139,12 @@ export class FileService {
     if (!fileRecord) {
       throw new HttpException('文件记录不存在', HttpStatus.BAD_REQUEST);
     }
-
     // 确保临时目录存在
     const chunkDir = path.join(this.tempDir, fileId);
     this.ensureDirectoryExists(chunkDir);
 
     // 保存切片文件
     const chunkPath = path.join(chunkDir, `${index}`);
-
     // 验证切片哈希
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
     const buffer = chunk.buffer;
@@ -311,6 +302,19 @@ export class FileService {
       code: 1,
       msg: '获取聊天文件成功',
       data: files,
+    };
+  }
+
+  async getFile(fileId: string) {
+    const file = await this.fileRepository.findOne({
+      where: { fileId },
+    });
+    if (!file) {
+      throw new HttpException('文件不存在', HttpStatus.NOT_FOUND);
+    }
+    return {
+      msg: '获取文件成功',
+      data: file,
     };
   }
 }

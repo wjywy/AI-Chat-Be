@@ -14,13 +14,13 @@ export class AiService {
       apiKey: 'sk-839c413f949049918615290813173f2f',
       baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
     });
-    console.log('ai service');
   }
 
   async getAiWithFile(filePath: string) {
     const fileObject = await this.openai.files.create({
       file: fs.createReadStream(filePath),
-      purpose: 'fine-tune',
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      purpose: 'file-extract' as any,
     });
 
     const res = `fileid://${fileObject.id}`;
@@ -52,7 +52,8 @@ export class AiService {
   }
 
   async getMain(message: string, filePath: string, imgUrl?: string[]) {
-    console.log('filePath', imgUrl);
+    const model = imgUrl ? 'qwen-vl-plus' : 'qwen-long';
+
     const content = filePath
       ? await this.getAiWithFile(filePath)
       : this.defaultMessage;
@@ -60,7 +61,7 @@ export class AiService {
     const userContent = imgUrl ? this.getAiWithImg(message, imgUrl) : message;
 
     const completion = await this.openai.chat.completions.create({
-      model: 'qwen-vl-max',
+      model: model,
       messages: [
         { role: 'system', content: content },
         { role: 'user', content: userContent },

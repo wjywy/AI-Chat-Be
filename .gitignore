@@ -6,6 +6,8 @@ pnpm-debug.log*
 node_modules
 dist
 
+uploads
+
 *.local
 
 # 环境变量文件

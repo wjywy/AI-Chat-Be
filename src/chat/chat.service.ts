@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Message, MessageRole } from './entities/message.entity';
+import { FileContent, Message, MessageRole } from './entities/message.entity';
 import { Chat } from './entities/chat.entity';
 
 import { AiService } from 'src/ai/ai.service';
@@ -68,23 +68,29 @@ export class ChatService {
   async useGeminiToChat({ id, message, imgUrl, fileId }: SendMessageDto) {
     try {
       let filePath = '';
+      const fileContent: FileContent[] = [];
       // 用户上传了文件
       if (fileId) {
-        const files = await this.fileService.getChatFiles(id); // 获取文件列表
-        if (files.data.length === 0) {
-          throw new HttpException('文件未上传', HttpStatus.BAD_REQUEST);
-        }
+        try {
+          const { data: file } = await this.fileService.getFile(fileId); // 获取文件列表
 
-        // 根据fileId查找对应的文件
-        const file = files.data.find((file) => file.fileId === fileId);
-        if (!file) {
-          throw new HttpException('找不到对应的文件', HttpStatus.NOT_FOUND);
+          filePath = file.filePath;
+          fileContent.push({
+            fileId,
+            fileName: file.filePath,
+          });
+        } catch (error) {
+          this.logger.error(`获取文件 ${fileId} 出错：${error}`);
         }
-
-        filePath = file.filePath;
       }
 
-      await this.saveMessage(id, message, MessageRole.USER, imgUrl); // 保存用户消息到数据库
+      await this.saveMessage(
+        id,
+        message,
+        MessageRole.USER,
+        imgUrl,
+        fileContent,
+      ); // 保存用户消息到数据库
 
       const completion = await this.aiService.getMain(
         message,
@@ -143,12 +149,14 @@ export class ChatService {
     content: string,
     role: MessageRole,
     imgUrl?: string[],
+    fileContent?: FileContent[],
   ) {
     const message = this.messageRepository.create({
       chatId,
       content,
       role,
       imgUrl,
+      fileContent,
     });
 
     return await this.messageRepository.save(message);
@@ -217,7 +225,6 @@ export class ChatService {
   }
 
   async searchChat({ keyWord }: SearchChatDto, userId: number) {
-    console.log(keyWord);
     return await this.chatRepository.find({
       where: { title: Like(`%${keyWord}%`), isActive: true, userId },
       order: { updateTime: 'DESC' },
