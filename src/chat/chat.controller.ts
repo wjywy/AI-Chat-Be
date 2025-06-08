@@ -146,6 +146,8 @@ export class ChatController {
       );
     }
 
+    console.log('sendMessageDto', sendMessageDto);
+
     // 调用 service 方法处理消息并通过 SSE 发送响应
     await this.chatService.useGeminiToChat(sendMessageDto);
 

@@ -14,6 +14,12 @@ export enum MessageRole {
   ASSISTANT = 'assistant',
 }
 
+export interface FileContent {
+  fileId: string;
+  fileName: string;
+  fileSize?: number;
+}
+
 @Entity()
 export class Message {
   @PrimaryGeneratedColumn('uuid')
@@ -36,6 +42,12 @@ export class Message {
     nullable: true,
   })
   imgUrl: string[];
+
+  @Column({
+    type: 'json',
+    nullable: true,
+  })
+  fileContent: FileContent[];
 
   @ManyToOne(() => Chat, (chat) => chat.messages, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'chatId' })

@@ -33,6 +33,7 @@ export class FileEntity {
 
   @Column({
     length: 256,
+    nullable: true,
   })
   chatId: string;
 
