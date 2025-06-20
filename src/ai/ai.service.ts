@@ -1,7 +1,9 @@
 import OpenAI from 'openai';
 import * as fs from 'fs';
-
+import * as path from 'path';
 import { Injectable } from '@nestjs/common';
+import { BASE_URL } from 'src/constant';
+import { isImageByExtension } from 'src/util';
 
 @Injectable()
 export class AiService {
@@ -17,8 +19,32 @@ export class AiService {
   }
 
   async getAiWithFile(filePath: string) {
+    // 将URL路径转换为本地文件系统路径
+    let localFilePath = filePath;
+
+    if (filePath.startsWith(BASE_URL)) {
+      // 如果是完整URL，移除BASE_URL部分
+      localFilePath = filePath.replace(BASE_URL, '');
+    }
+
+    if (localFilePath.startsWith('/uploads/')) {
+      // 如果是相对URL路径，转换为绝对本地路径
+      localFilePath = path.join(
+        process.cwd(),
+        localFilePath.replace(/^\//, ''),
+      );
+    } else if (localFilePath.startsWith('uploads/')) {
+      // 如果已经移除了前导斜杠，直接拼接
+      localFilePath = path.join(process.cwd(), localFilePath);
+    }
+
+    // 确保路径使用正确的分隔符
+    localFilePath = path.normalize(localFilePath);
+
+    console.log('转换后的本地路径:', localFilePath);
+
     const fileObject = await this.openai.files.create({
-      file: fs.createReadStream(filePath),
+      file: fs.createReadStream(localFilePath),
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       purpose: 'file-extract' as any,
     });
@@ -29,16 +55,17 @@ export class AiService {
 
   async getAiWithMessage() {}
 
-  getAiWithImg(message: string, imgUrl: string[]) {
+  getAiWithImg(message: string, imgUrl: string) {
     const imgContent: {
       type: 'image_url';
       image_url: { url: string };
-    }[] = imgUrl.map((item) => {
-      return {
-        type: 'image_url',
-        image_url: { url: item },
-      };
-    });
+    } = {
+      type: 'image_url',
+      image_url: { url: imgUrl },
+    };
+    // imgUrl.map((item) => {
+
+    // });
 
     const messageContent: {
       type: 'text';
@@ -48,17 +75,20 @@ export class AiService {
       text: message,
     };
 
-    return [messageContent, ...imgContent];
+    return [messageContent, imgContent];
   }
 
   async getMain(message: string, filePath: string, imgUrl?: string[]) {
-    const model = imgUrl ? 'qwen-vl-plus' : 'qwen-long';
+    const isImage = isImageByExtension(filePath);
+    const model = isImage ? 'qwen-vl-plus' : 'qwen-long';
 
     const content = filePath
       ? await this.getAiWithFile(filePath)
       : this.defaultMessage;
 
-    const userContent = imgUrl ? this.getAiWithImg(message, imgUrl) : message;
+    const userContent = isImage
+      ? this.getAiWithImg(message, filePath)
+      : message;
 
     const completion = await this.openai.chat.completions.create({
       model: model,

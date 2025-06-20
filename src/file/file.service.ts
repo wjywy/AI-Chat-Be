@@ -14,6 +14,7 @@ import {
 } from './dto';
 import { Chat } from '../chat/entities/chat.entity';
 import { FileEntity } from './entities/file.entity';
+import { BASE_URL } from 'src/constant';
 
 @Injectable()
 export class FileService {
@@ -47,7 +48,7 @@ export class FileService {
     // 将绝对路径转换为相对于uploads目录的路径
     const relativePath = path.relative(this.uploadDir, absolutePath);
     // 转换为URL格式，使用正斜杠
-    return `/uploads/${relativePath.replace(/\\/g, '/')}`;
+    return `${BASE_URL}/uploads/${relativePath.replace(/\\/g, '/')}`;
   }
 
   async checkFile(checkFileDto: CheckFileDto) {
@@ -209,7 +210,7 @@ export class FileService {
     // 更新文件记录
     fileRecord.isCompleted = true;
     fileRecord.totalChunks = totalChunks;
-    fileRecord.filePath = filePath;
+    fileRecord.filePath = this.getRelativeFilePath(filePath);
     await this.fileRepository.save(fileRecord);
 
     // 删除临时目录

@@ -17,6 +17,8 @@ import { Message } from './chat/entities/message.entity';
 import { FileModule } from './file/file.module';
 import { FileEntity } from './file/entities/file.entity';
 import { AiModule } from './ai/ai.module';
+import { AgentModule } from './agent/agent.module';
+// import { Agent } from './agent/entities/agent.entity';
 
 @Module({
   imports: [
@@ -42,7 +44,7 @@ import { AiModule } from './ai/ai.module';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         synchronize: false,
-        entities: [User, Chat, Message, FileEntity],
+        entities: [User, Chat, Message, FileEntity], // 添加Agent实体
       }),
       inject: [ConfigService],
     }),
@@ -52,6 +54,7 @@ import { AiModule } from './ai/ai.module';
     ChatModule,
     FileModule,
     AiModule,
+    AgentModule,
   ],
   controllers: [AppController],
   providers: [
