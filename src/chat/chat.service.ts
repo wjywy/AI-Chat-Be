@@ -75,6 +75,7 @@ export class ChatService {
           const { data: file } = await this.fileService.getFile(fileId); // 获取文件列表
 
           filePath = file.filePath;
+          console.log('filePathsss', filePath);
           fileContent.push({
             fileId,
             fileName: file.filePath,
