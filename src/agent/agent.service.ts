@@ -1,11 +1,13 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+// 在文件顶部添加
 import { PromptTemplate } from '@langchain/core/prompts';
+import { StringOutputParser } from '@langchain/core/output_parsers';
 import { ChatOpenAI } from '@langchain/openai';
 import { Runnable } from '@langchain/core/runnables';
-import { StringOutputParser } from '@langchain/core/output_parsers';
 
 import { AgentType } from './entities/agent.entity';
 import { GenerateContentDto } from './dto/create-agent.dto';
+import { ChainValues } from '@langchain/core/utils/types';
 
 @Injectable()
 export class AgentService {
@@ -13,6 +15,7 @@ export class AgentService {
   // 修改类型定义为 Runnable 而不是 RunnableSequence
   private poetryAgent: Runnable<{ input: string }, string>;
   private xiaohongshuAgent: Runnable<{ input: string }, string>;
+  private weatherAgent: Runnable<{ input: string }, ChainValues | string>;
 
   constructor() {
     // 初始化LangChain模型
@@ -68,13 +71,24 @@ export class AgentService {
     this.xiaohongshuAgent = xiaohongshuPrompt
       .pipe(this.llm)
       .pipe(new StringOutputParser());
+
+    const weatherPrompt = PromptTemplate.fromTemplate(`
+    你是一个专业的天气查询助手，能够根据用户的问题查询当前的天气情况。
+
+    用户问题：{input}
+
+    请查询当前天气情况：
+    `);
+    this.weatherAgent = weatherPrompt
+      .pipe(this.llm)
+      .pipe(new StringOutputParser());
   }
 
   // 生成内容的核心方法
   async generateContent(generateContentDto: GenerateContentDto): Promise<{
     success: boolean;
     data: {
-      content: string;
+      content: string | ChainValues;
       agentType: AgentType;
       prompt: string;
     };
@@ -83,7 +97,7 @@ export class AgentService {
     const { agentType, prompt, options } = generateContentDto;
 
     try {
-      let result: string;
+      let result: string | ChainValues;
 
       switch (agentType) {
         case AgentType.POETRY:
