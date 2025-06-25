@@ -59,6 +59,15 @@ export class AgentController {
     }
   }
 
+  @Post('rag/test')
+  async searchTechPdf() {
+    const result = await this.ragService.searchTechPdf();
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
   @Post('rag/simple')
   async ragSimpleQuery(
     @Body() body: { query: string; options?: Record<string, any> },
