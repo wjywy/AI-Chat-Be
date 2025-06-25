@@ -6,20 +6,32 @@ import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { PromptTemplate } from '@langchain/core/prompts';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as pdfParse from 'pdf-parse';
 import {
   KNOWLEDGE_DOCUMENTS,
   KnowledgeDocument,
 } from '../knowledge-base/documents';
-import { RagQueryDto, RagResponseDto, AddDocumentDto } from '../dto/rag.dto';
+import {
+  RagQueryDto,
+  RagResponseDto,
+  AddDocumentDto,
+  ProcessPdfDto,
+  PdfProcessResponseDto,
+} from '../dto/rag.dto';
 import { Runnable } from '@langchain/core/runnables';
 
-// 方案3：定义更精确的类型
 interface DocumentWithMetadata extends Document {
   metadata: {
     id?: string;
     title?: string;
     category?: string;
     score?: number;
+    source?: string;
+    pageNumber?: number;
+    fileName?: string;
+    chunkIndex?: number;
   };
 }
 
@@ -29,7 +41,6 @@ export class RagService {
   private vectorStore: MemoryVectorStore;
   private llm: ChatOpenAI;
   private embeddings: OpenAIEmbeddings;
-  // 修改类型定义
   private qaChain: Runnable;
   private textSplitter: RecursiveCharacterTextSplitter;
   private documents: KnowledgeDocument[] = [...KNOWLEDGE_DOCUMENTS];
@@ -261,5 +272,217 @@ export class RagService {
    */
   getCategories(): string[] {
     return [...new Set(this.documents.map((doc) => doc.category))];
+  }
+
+  /**
+   * 处理PDF文件进行RAG
+   * @param processPdfDto PDF处理参数
+   * @returns 处理结果
+   */
+  async processPdfFile(
+    processPdfDto: ProcessPdfDto,
+  ): Promise<PdfProcessResponseDto> {
+    try {
+      const {
+        filePath,
+        title,
+        category = 'PDF文档',
+        metadata = {},
+      } = processPdfDto;
+
+      // 检查文件是否存在
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`PDF文件不存在: ${filePath}`);
+      }
+
+      // 读取PDF文件
+      const pdfBuffer = fs.readFileSync(filePath);
+
+      // 提取PDF文本
+      const pdfData = await pdfParse(pdfBuffer);
+      const extractedText = pdfData.text;
+
+      if (!extractedText || extractedText.trim().length === 0) {
+        throw new Error('PDF文件中没有提取到文本内容');
+      }
+
+      // 生成文档ID和标题
+      const documentId = `pdf_${Date.now()}`;
+      const documentTitle = title || path.basename(filePath, '.pdf');
+
+      // 创建知识文档
+      const knowledgeDoc: KnowledgeDocument = {
+        id: documentId,
+        title: documentTitle,
+        content: extractedText,
+        category,
+        metadata: {
+          ...metadata,
+          source: filePath,
+          fileName: path.basename(filePath),
+          fileSize: pdfBuffer.length,
+          pageCount: pdfData.numpages,
+          processedAt: new Date().toISOString(),
+        },
+      };
+
+      // 添加到文档列表
+      this.documents.push(knowledgeDoc);
+
+      // 文本分割
+      const chunks = await this.textSplitter.splitText(extractedText);
+      const documents: Document[] = [];
+
+      // 创建文档块
+      for (let i = 0; i < chunks.length; i++) {
+        documents.push(
+          new Document({
+            pageContent: chunks[i],
+            metadata: {
+              id: documentId,
+              title: documentTitle,
+              category,
+              chunkIndex: i,
+              source: filePath,
+              fileName: path.basename(filePath),
+              ...metadata,
+            },
+          }),
+        );
+      }
+
+      // 添加到向量存储
+      await this.vectorStore.addDocuments(documents);
+
+      this.logger.log(
+        `PDF文件处理完成: ${filePath}, 生成 ${chunks.length} 个文本块`,
+      );
+
+      return {
+        success: true,
+        message: 'PDF文件处理成功',
+        documentId,
+        chunksCount: chunks.length,
+        extractedText: extractedText.substring(0, 500) + '...', // 返回前500字符作为预览
+      };
+    } catch (error) {
+      this.logger.error('PDF文件处理失败:', error);
+      return {
+        success: false,
+        message: `PDF文件处理失败: ${error}`,
+      };
+    }
+  }
+
+  /**
+   * 批量处理PDF文件
+   * @param pdfFiles PDF文件路径数组
+   * @param category 文档分类
+   * @returns 批量处理结果
+   */
+  async processPdfFiles(
+    pdfFiles: string[],
+    category: string = 'PDF文档',
+  ): Promise<PdfProcessResponseDto[]> {
+    const results: PdfProcessResponseDto[] = [];
+
+    for (const filePath of pdfFiles) {
+      const result = await this.processPdfFile({
+        filePath,
+        category,
+        title: path.basename(filePath, '.pdf'),
+      });
+      results.push(result);
+    }
+
+    return results;
+  }
+
+  /**
+   * 从PDF文件中搜索相关内容
+   * @param query 查询内容
+   * @param pdfSource 指定PDF来源（可选）
+   * @param k 返回结果数量
+   * @returns 搜索结果
+   */
+  async searchInPdf(
+    query: string,
+    pdfSource?: string,
+    k: number = 5,
+  ): Promise<any[]> {
+    try {
+      let retriever = this.vectorStore.asRetriever({ k });
+
+      // 如果指定了PDF来源，添加过滤器
+      if (pdfSource) {
+        retriever = this.vectorStore.asRetriever({
+          k,
+          filter: (doc) => doc.metadata.source === pdfSource,
+        });
+      }
+
+      const results = await retriever.invoke(query);
+
+      return results.map((doc: DocumentWithMetadata, index: number) => ({
+        id: doc.metadata.id || `doc_${index}`,
+        title: doc.metadata.title || '未知标题',
+        category: doc.metadata.category || '未分类',
+        content: doc.pageContent,
+        source: doc.metadata.source,
+        fileName: doc.metadata.fileName,
+        chunkIndex: doc.metadata.chunkIndex,
+        metadata: doc.metadata,
+      }));
+    } catch (error) {
+      this.logger.error('PDF搜索失败:', error);
+      throw new Error(`PDF搜索失败: ${error}`);
+    }
+  }
+
+  /**
+   * 获取已处理的PDF文档列表
+   * @returns PDF文档列表
+   */
+  getPdfDocuments(): KnowledgeDocument[] {
+    return this.documents.filter(
+      (doc) =>
+        doc.metadata?.fileName &&
+        typeof doc.metadata.fileName === 'string' &&
+        doc.metadata.fileName.endsWith('.pdf'),
+    );
+  }
+
+  async searchTechPdf() {
+    // 处理单个PDF文件
+    const result = await this.processPdfFile({
+      filePath: 'C:\\Users\\29346\\Desktop\\2021212400-吴家余-教学档案.pdf',
+      title: '吴家余教学档案',
+      category: '教学文档',
+      metadata: {
+        author: '吴家余',
+        year: '2021',
+        type: '教学档案',
+      },
+    });
+
+    console.log(result, 'result');
+
+    // 在PDF中搜索内容
+    const searchResults = await this.searchInPdf(
+      '教学计划',
+      'C:\\Users\\29346\\Desktop\\2021212400-吴家余-教学档案.pdf',
+      5,
+    );
+
+    console.log(searchResults, 'searchResults');
+
+    // 使用RAG进行问答
+    const answer = await this.query({
+      query: '教学档案中包含哪些内容？',
+      k: 3,
+      categories: ['教学文档'],
+    });
+
+    return answer;
   }
 }

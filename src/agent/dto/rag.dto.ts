@@ -55,3 +55,28 @@ export class AddDocumentDto {
   @IsOptional()
   metadata?: Record<string, any>;
 }
+
+// 新增PDF处理DTO
+export class ProcessPdfDto {
+  @IsString()
+  filePath: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @IsOptional()
+  metadata?: Record<string, any>;
+}
+
+export class PdfProcessResponseDto {
+  success: boolean;
+  message: string;
+  documentId?: string;
+  chunksCount?: number;
+  extractedText?: string;
+}
