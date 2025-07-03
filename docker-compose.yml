@@ -1,0 +1,67 @@
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: aichat-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 630wujiayuwy
+      MYSQL_DATABASE: aiChat
+      # 删除这两行，因为它们不能用于 root 用户
+      # MYSQL_USER: root
+      # MYSQL_PASSWORD: 630wujiayuwy
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - aichat-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: aichat-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - aichat-network
+
+  # 应用服务
+  app:
+    build: .
+    container_name: aichat-app
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USERNAME=root
+      - DB_PASSWORD=630wujiayuwy
+      - DB_DATABASE=aiChat
+      - redis_server_host=redis
+      - redis_server_port=6379
+      - redis_server_db=1
+      - nodemailer_host=smtp.qq.com
+      - nodemailer_port=587
+      - nodemailer_auth_user=2934610933@qq.com
+      - nodemailer_auth_pass=oxxppsmbvppndfdc
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - aichat-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  aichat-network:
+    driver: bridge

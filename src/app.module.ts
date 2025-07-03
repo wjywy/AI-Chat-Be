@@ -43,7 +43,7 @@ import { AgentModule } from './agent/agent.module';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        synchronize: false,
+        synchronize: true,
         entities: [User, Chat, Message, FileEntity], // 添加Agent实体
       }),
       inject: [ConfigService],
