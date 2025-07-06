@@ -12,8 +12,13 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // 配置静态文件服务
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  // 配置静态文件服务 - 修复路径问题
+  const uploadsPath =
+    process.env.NODE_ENV === 'production'
+      ? join(__dirname, '..', 'uploads')
+      : join(process.cwd(), 'uploads');
+
+  app.useStaticAssets(uploadsPath, {
     prefix: '/uploads/',
   });
 

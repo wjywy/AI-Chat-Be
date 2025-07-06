@@ -12,12 +12,14 @@ import { GenerateContentDto } from './dto/create-agent.dto';
 import { RagService } from './services/rag.service';
 import { RagQueryDto, AddDocumentDto } from './dto/rag.dto';
 import { AgentType } from './entities/agent.entity';
+import { MbtiService } from './services/mbti.service';
 
 @Controller('agent')
 export class AgentController {
   constructor(
     private readonly agentService: AgentService,
     private readonly ragService: RagService,
+    private readonly mbtiService: MbtiService,
   ) {}
 
   @Get('templates')
@@ -138,5 +140,57 @@ export class AgentController {
       success: true,
       data: this.ragService.getCategories(),
     };
+  }
+
+  // MBTI相关端点
+  @Post('mbti/chat')
+  async mbtiChat(@Body() body: { input: string; sessionId?: string }) {
+    try {
+      const result = await this.mbtiService.chat(
+        body.input,
+        body.sessionId || 'default',
+      );
+      return {
+        success: true,
+        data: {
+          content: result,
+          sessionId: body.sessionId || 'default',
+        },
+      };
+    } catch (error) {
+      throw new HttpException(
+        error || 'MBTI聊天失败',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Post('mbti/simple')
+  async mbtiSimpleQuery(
+    @Body()
+    body: {
+      query: string;
+      sessionId?: string;
+      options?: Record<string, any>;
+    },
+  ) {
+    try {
+      const generateContentDto: GenerateContentDto = {
+        agentType: 'mbti' as AgentType.MBTI,
+        prompt: body.query,
+        options: {
+          sessionId: body.sessionId || 'default',
+          ...body.options,
+        },
+      };
+      const result =
+        await this.agentService.generateContent(generateContentDto);
+      return result;
+    } catch (error) {
+      throw new HttpException(
+        error || 'MBTI查询失败',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

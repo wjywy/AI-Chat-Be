@@ -8,6 +8,7 @@ import { Runnable } from '@langchain/core/runnables';
 import { AgentType } from './entities/agent.entity';
 import { GenerateContentDto } from './dto/create-agent.dto';
 import { ChainValues } from '@langchain/core/utils/types';
+import { MbtiService } from './services/mbti.service';
 
 @Injectable()
 export class AgentService {
@@ -17,7 +18,7 @@ export class AgentService {
   private xiaohongshuAgent: Runnable<{ input: string }, string>;
   private weatherAgent: Runnable<{ input: string }, ChainValues | string>;
 
-  constructor() {
+  constructor(private readonly mbtiService: MbtiService) {
     // 初始化LangChain模型
     this.llm = new ChatOpenAI({
       openAIApiKey: 'sk-839c413f949049918615290813173f2f',
@@ -106,6 +107,9 @@ export class AgentService {
         case AgentType.XIAOHONGSHU:
           result = await this.generateXiaohongshu(prompt);
           break;
+        case AgentType.MBTI:
+          result = await this.generateMbti(prompt, options);
+          break;
         default:
           throw new HttpException('不支持的Agent类型', HttpStatus.BAD_REQUEST);
       }
@@ -144,6 +148,16 @@ export class AgentService {
     return result;
   }
 
+  // MBTI聊天生成
+  private async generateMbti(
+    prompt: string,
+    options?: Record<string, any>,
+  ): Promise<string> {
+    const sessionId = options?.sessionId || 'default';
+    const result = await this.mbtiService.chat(prompt, sessionId);
+    return result;
+  }
+
   // 获取预设的Agent模板
   getAgentTemplates() {
     return [
@@ -168,6 +182,17 @@ export class AgentService {
           '美食探店分享',
           '穿搭搭配指南',
           '旅行攻略分享',
+        ],
+      },
+      {
+        name: 'MBTI咨询师助手',
+        type: AgentType.MBTI,
+        description:
+          '专业的MBTI咨询师助手，根据用户的MBTI类型提供个性化的情感支持和建议',
+        examples: [
+          '我是INFP，最近工作压力很大怎么办？',
+          '作为ENTJ，如何更好地与团队沟通？',
+          '我不知道我的MBTI类型，能帮我分析一下吗？',
         ],
       },
     ];

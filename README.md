@@ -12,6 +12,6 @@ cd AI-Chat-Be
 # 复制环境变量文件并根据需要修改
 cp .env
 
-# 启动所有服务
-docker-compose up -d
+# 启动mysql和redis服务
+docker-compose up mysql redis -d
 ```

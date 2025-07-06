@@ -11,6 +11,7 @@ export enum AgentType {
   XIAOHONGSHU = 'xiaohongshu',
   WEATHER = 'weather',
   RAG = 'rag',
+  MBTI = 'mbti',
 }
 
 // @Entity('agents')

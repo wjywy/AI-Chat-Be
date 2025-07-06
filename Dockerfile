@@ -25,4 +25,4 @@ RUN pnpm run build
 EXPOSE 3000
 
 # 启动应用
-CMD ["pnpm", "run", "start:prod"]
+CMD ["pnpm", "run", "start:dev"]
