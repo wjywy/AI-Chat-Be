@@ -1,3 +1,5 @@
+import { Repository } from 'typeorm';
+
 import {
   HttpException,
   Injectable,
@@ -5,13 +7,15 @@ import {
   HttpStatus,
   Inject,
 } from '@nestjs/common';
-import { md5 } from '../util';
-import { RegisterUserDto } from './dto/register-user.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
-import { Repository } from 'typeorm';
+
 import { LoginUserDto } from './dto/login-user.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
+
 import { RedisService } from '../redis/redis.service';
+import { User } from './entities/user.entity';
+
+import { md5 } from '../util';
 
 @Injectable()
 export class UsersService {
@@ -45,14 +49,17 @@ export class UsersService {
     const newUser = new User();
     newUser.userName = userName;
     newUser.password = md5(password);
-    newUser.nickName = nickName || 'MoMo'; // 昵称默认为MoMo
+    newUser.nickName = nickName || 'MoMo';
 
     try {
       await this.userRepository.save(newUser);
-      return '注册成功';
+      return {
+        message: '注册成功',
+        data: {},
+      };
     } catch (error) {
       this.logger.error(error, UsersService);
-      return '注册失败';
+      throw new HttpException('注册失败', HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -64,20 +71,16 @@ export class UsersService {
     });
 
     if (!userInfo) {
-      throw new HttpException('用户不存在', HttpStatus.BAD_REQUEST);
+      throw new HttpException('用户not found', HttpStatus.BAD_REQUEST);
     }
 
-    if (userInfo.password !== password) {
+    if (userInfo.password !== md5(password)) {
       throw new HttpException('密码错误', HttpStatus.BAD_REQUEST);
     }
 
-    const needReturnUserInfo = {
-      id: userInfo.id,
-      userName: userInfo.userName,
-      nickName: userInfo.nickName,
+    return {
+      ...userInfo,
       token: '',
     };
-
-    return needReturnUserInfo;
   }
 }

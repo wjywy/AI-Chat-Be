@@ -11,6 +11,14 @@ import { User } from './users/entities/user.entity';
 import { EmailModule } from './email/email.module';
 import { RedisModule } from './redis/redis.module';
 import { LoginGuard } from './login.guard';
+import { ChatModule } from './chat/chat.module';
+import { Chat } from './chat/entities/chat.entity';
+import { Message } from './chat/entities/message.entity';
+import { FileModule } from './file/file.module';
+import { FileEntity } from './file/entities/file.entity';
+import { AiModule } from './ai/ai.module';
+import { AgentModule } from './agent/agent.module';
+// import { Agent } from './agent/entities/agent.entity';
 
 @Module({
   imports: [
@@ -35,14 +43,18 @@ import { LoginGuard } from './login.guard';
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
-        synchronize: false,
-        entities: [User],
+        synchronize: true,
+        entities: [User, Chat, Message, FileEntity], // 添加Agent实体
       }),
       inject: [ConfigService],
     }),
     UsersModule,
     EmailModule,
     RedisModule,
+    ChatModule,
+    FileModule,
+    AiModule,
+    AgentModule,
   ],
   controllers: [AppController],
   providers: [

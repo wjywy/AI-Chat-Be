@@ -6,10 +6,15 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'commitlint.config.cjs'],
+    ignores: [
+      'eslint.config.mjs',
+      'commitlint.config.cjs',
+      'dist/**',
+      'node_modules/**',
+    ],
   },
   eslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  ...tseslint.configs.recommended, // 使用recommended而不是recommendedTypeChecked
   eslintPluginPrettierRecommended,
   {
     languageOptions: {
@@ -19,6 +24,7 @@ export default tseslint.config(
       },
       sourceType: 'commonjs',
       parserOptions: {
+        project: false, // 禁用项目级别的类型检查以提高速度
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },

@@ -12,7 +12,7 @@ import { Request } from 'express';
 import { Observable } from 'rxjs';
 
 interface JwtUserData {
-  id: number;
+  userId: number;
   username: string;
   nickName: string;
 }
@@ -57,8 +57,10 @@ export class LoginGuard implements CanActivate {
 
     try {
       const token = authorization;
-      const data = this.jwtService.verify<JwtUserData>(token);
+      console.log(token, 'data');
 
+      const data = this.jwtService.verify<JwtUserData>(token);
+      console.log(data, 'data');
       request.user = {
         ...data,
       };

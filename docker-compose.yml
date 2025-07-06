@@ -1,0 +1,36 @@
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: aichat-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 630wujiayuwy
+      MYSQL_DATABASE: aiChat
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - aichat-network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: aichat-redis
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - aichat-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  aichat-network:
+    driver: bridge

@@ -6,10 +6,19 @@ pnpm-debug.log*
 node_modules
 dist
 
+uploads
+
 *.local
 
 # 环境变量文件
-src/.env
+.env
+
+# Docker 相关
+docker-compose.override.yml
+
+# 数据库数据
+mysql_data/
+redis_data/
 
 # 或者忽略所有.env文件
 # **/.env

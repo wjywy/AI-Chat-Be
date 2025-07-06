@@ -1,30 +1,17 @@
-AI对话平台的后端服务
+# AI Chat Backend
 
-## 启动步骤
+## 快速启动（推荐）
 
-1. 安装依赖
+使用 Docker Compose 一键启动所有服务：
 
-```shell
-pnpm install
-```
+```bash
+# 克隆项目
+git clone <your-repo-url>
+cd AI-Chat-Be
 
-2. 配置环境变量
-
-```shell
+# 复制环境变量文件并根据需要修改
 cp .env
+
+# 启动mysql和redis服务
+docker-compose up mysql redis -d
 ```
-
-```shell
-# 配置文件
-DB_HOST=xxx,
-DB_PORT=xxx,
-DB_USERNAME=xxx,
-DB_PASSWORD=xxx,
-DB_DATABASE=xxx
-```
-
-3. 启动服务
-
-   ```shell
-   pnpm start
-   ```
