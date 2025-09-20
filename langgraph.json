@@ -1,0 +1,8 @@
+{
+  "graphs": {
+    "graph": "./src/langsmith/graph.ts:graph"
+  },
+  "node_version": "20",
+  "env": ".env",
+  "dockerfile_lines": []
+}

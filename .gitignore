@@ -33,3 +33,6 @@ redis_data/
 *.njsproj
 *.sln
 *.sw?
+
+# LangGraph API
+.langgraph_api
