@@ -12,8 +12,7 @@ uploads
 
 # 环境变量文件
 .env
-
-src/.env
+# src/.env
 
 # Docker 相关
 docker-compose.override.yml
