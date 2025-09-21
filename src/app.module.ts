@@ -18,7 +18,14 @@ import { FileModule } from './file/file.module';
 import { FileEntity } from './file/entities/file.entity';
 import { AiModule } from './ai/ai.module';
 import { AgentModule } from './agent/agent.module';
+import { RagModule } from './rag/rag.module';
 // import { Agent } from './agent/entities/agent.entity';
+import {
+  RagDocument,
+  RagChunk,
+  RagQuery,
+  RagQueryResult,
+} from './rag/entities';
 
 @Module({
   imports: [
@@ -44,7 +51,16 @@ import { AgentModule } from './agent/agent.module';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         synchronize: true,
-        entities: [User, Chat, Message, FileEntity], // 添加Agent实体
+        entities: [
+          User,
+          Chat,
+          Message,
+          FileEntity,
+          RagDocument,
+          RagChunk,
+          RagQuery,
+          RagQueryResult,
+        ], // 添加Agent和RAG实体
       }),
       inject: [ConfigService],
     }),
@@ -55,6 +71,7 @@ import { AgentModule } from './agent/agent.module';
     FileModule,
     AiModule,
     AgentModule,
+    RagModule,
   ],
   controllers: [AppController],
   providers: [
